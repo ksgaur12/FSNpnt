@@ -6,12 +6,14 @@ import QtQuick.Controls 2.4
 import QtQuick.Controls 2.0
 import Qt.labs.platform 1.0
 import QtQuick.Dialogs 1.1
+import QtQuick.Dialogs 1.2
 
+import "qrc:/"
 
 Window {
     id: window
     visible: true
-    width: 640
+    width: 1000
     height: 480
     title: qsTr("Firmware Server NPNT")
 
@@ -46,6 +48,7 @@ Window {
             text1.visible = true
             downloadProgressBar.visible = true
             if(val == 100){
+                message_box.title = "Message"
                 message_box.text = "Download Complete"
                 message_box.visible = true
                 downloadProgressBar.visible = false
@@ -54,12 +57,13 @@ Window {
         }
     }
 
+
     TreeView{
         id: fc_list
         z: 2
         anchors.left: parent.left
         anchors.leftMargin: 2
-        anchors.right: port_box.left
+        anchors.right: certificate_geneate.left
         anchors.rightMargin: 2
         anchors.bottom: download_button.top
         anchors.bottomMargin: 2
@@ -151,6 +155,7 @@ Window {
         font.pixelSize: 12
     }
 
+
     Button {
         id: download_button
         x: 2
@@ -166,6 +171,7 @@ Window {
 
         onClicked: {
             if(downloadProgressBar.visible){
+                message_box.title = "Error"
                 message_box.text = "Download already in progress"
                 message_box.visible = true
             }
@@ -218,10 +224,12 @@ Window {
 
         onClicked: {
             if(port_box.currentIndex == -1){
+                message_box.title = "Error"
                 message_box.text = "Please select a device"
                 message_box.visible = true
             }
             else if(!baud_box.currentIndex){
+                message_box.title = "Error"
                 message_box.text = "Please select a baudrate"
                 message_box.visible = true
             }
@@ -241,17 +249,34 @@ Window {
         }
     }
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
+    Certhandle{
+        id: cert
+        visible: false
+        anchors.bottom: parent.verticalCenter
+        anchors.bottomMargin: -196
+        anchors.right: parent.right
+        anchors.rightMargin: 2
+        anchors.left: certificate_geneate.left
+        anchors.leftMargin: 0
+        anchors.top: certificate_geneate.bottom
+        anchors.topMargin: 2
+        z: 2
     }
 
+    Button {
+        id: certificate_geneate
+        x: 790
+        width: 140
+        height: 30
+        text: qsTr("Generate Cert")
+        z: 2
+        anchors.right: port_box.left
+        anchors.rightMargin: 2
+        anchors.top: parent.top
+        anchors.topMargin: 2
 
-
-
+        onClicked: {
+            cert.visible = true
+        }
+    }
 }
-
-/*##^## Designer {
-    D{i:24;anchors_width:383;anchors_x:249}D{i:25;anchors_y:459}D{i:21;anchors_height:388;anchors_width:230}
-}
- ##^##*/

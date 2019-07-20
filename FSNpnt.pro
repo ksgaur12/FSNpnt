@@ -2,12 +2,16 @@ QT += quick serialport widgets
 CONFIG += c++11
 
 DEFINES += QT_DEPRECATED_WARNINGS
-PKGCONFIG += openssl
+#PKGCONFIG += libssl
+LIBS += -lssl -lcrypto
+#INCLUDEPATH += /usr/include/openssl
 SOURCES += \
         main.cpp \
     serialcom.cpp \
     filemanager.cpp \
-    filemodel.cpp
+    filemodel.cpp \
+    certhandle.cpp \
+    buildhandle.cpp
 
 RESOURCES += qml.qrc
 
@@ -237,7 +241,8 @@ HEADERS += \
     mavlink/protocol.h \
     filemanager.h \
     filemodel.h \
+    certhandle.h \
+    buildhandle.h
 
 
-DISTFILES += \
-
+DISTFILES +=
