@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QDebug>
 #include <QQmlContext>
+#include <QtWidgets>
 
 #include "buildhandle.h"
 #include "certhandle.h"
@@ -20,7 +21,11 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
+
+    app.setOrganizationName("Firmware Server");
+    app.setOrganizationDomain("");
+    app.setApplicationName("Firmware Server NPNT");
 
     QQmlApplicationEngine engine;
 

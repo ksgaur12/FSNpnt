@@ -1708,6 +1708,7 @@ main.o: ../main.cpp ../../Qt5.11.3/5.11.3/gcc_64/include/QtGui/QGuiApplication \
 		../../Qt5.11.3/5.11.3/gcc_64/include/QtCore/QDebug \
 		../../Qt5.11.3/5.11.3/gcc_64/include/QtQml/QQmlContext \
 		../../Qt5.11.3/5.11.3/gcc_64/include/QtQml/qqmlcontext.h \
+		../../Qt5.11.3/5.11.3/gcc_64/include/QtWidgets \
 		../buildhandle.h \
 		../../Qt5.11.3/5.11.3/gcc_64/include/QtCore/QObject \
 		../../Qt5.11.3/5.11.3/gcc_64/include/QtCore/QFile \

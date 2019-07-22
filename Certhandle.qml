@@ -9,8 +9,8 @@ import QtQuick.Dialogs 1.2
 
 Item {
     id:cert
-    width: 544
-    height: 446
+//    width: 544
+//    height: 446
 
     Connections{
         target: cert_manager
