@@ -29,7 +29,8 @@ void filemodel::item_clicked(QModelIndex index)
     }
     _last_str_path = str;
     if(this->itemFromIndex(index)->hasChildren()){
-        return;
+        //this->itemFromIndex(index)->removeColumn(0);
+        this->itemFromIndex(index)->removeRows(0, this->itemFromIndex(index)->rowCount());
     }
 
      file_manager.listDirectory(str);
@@ -57,4 +58,20 @@ void filemodel::download_file(QString dir_url){
    // qDebug() << _last_str_path;
 
     file_manager.downloadFile(_last_str_path, dir, true);
+}
+
+void filemodel::upload_file(QString file_url){
+    file_url.remove(0, 7);
+    QFileInfo PA_file(file_url);
+    qDebug() << PA_file.exists();
+
+    file_manager.uploadPath("/", PA_file);
+}
+
+void filemodel::delete_file(){
+    if(_last_str_path.isEmpty()){
+        return;
+    }
+    qDebug() << _last_str_path;
+    file_manager.deleteFile(_last_str_path);
 }

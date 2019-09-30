@@ -185,7 +185,7 @@ void FileManager::_sendResetCommand(void)
     Request request;
     request.hdr.opcode = kCmdResetSessions;
     request.hdr.size = 0;
-    qDebug() << "send reset commnad";
+    qDebug() << "send reset command";
     _sendRequest(&request);
 }
 
@@ -230,7 +230,9 @@ void FileManager::_sendRequestNoAck(Request* request)
 void FileManager::_sendRequest(Request* request)
 {
     _setupAckTimeout();
+
     request->hdr.seqNumber = ++_lastOutgoingRequest.hdr.seqNumber;
+    qDebug() << "send request : " << request->hdr.seqNumber;
     // store the current request
     if (request->hdr.size <= sizeof(request->data)) {
         memcpy(&_lastOutgoingRequest, request, sizeof(RequestHeader) + request->hdr.size);
@@ -260,6 +262,70 @@ void FileManager::listDirectory(const QString dirPath)
     _fillRequestWithString(&request, dirPath);
     _sendRequest(&request);
 }
+
+void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
+{
+    if(_currentOperation != kCOIdle){
+        qDebug() << tr("UAS File manager busy. Try again later");
+        return;
+    }
+
+    if (toPath.isEmpty()) {
+        return;
+    }
+
+    if (!uploadFile.isReadable()){
+        qDebug() << (tr("File (%1) is not readable for upload").arg(uploadFile.path()));
+        return;
+    }
+
+    QFile file(uploadFile.absoluteFilePath());
+    if (!file.open(QIODevice::ReadOnly)) {
+            qDebug() << (tr("Unable to open local file for upload (%1)").arg(uploadFile.absoluteFilePath()));
+            return;
+        }
+
+    _writeFileAccumulator = file.readAll();
+    _writeFileSize = _writeFileAccumulator.size();
+
+    file.close();
+
+    if (_writeFileAccumulator.size() == 0) {
+        qDebug() << (tr("Unable to read data from local file (%1)").arg(uploadFile.absoluteFilePath()));
+        return;
+    }
+
+    _currentOperation = kCOCreate;
+
+    Request request;
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdCreateFile;
+    request.hdr.offset = 0;
+    request.hdr.size = 0;
+
+    qDebug() << uploadFile.fileName();
+    _fillRequestWithString(&request, toPath + "/" + "permissionArtifact.xml");
+    _sendRequest(&request);
+}
+
+void FileManager::deleteFile(const QString& file){
+    if(_currentOperation != kCOIdle){
+        qDebug() << (tr("UAS File manager busy. Try again later"));
+        return;
+    }
+
+    _currentOperation = KCORemove;
+
+    Request request;
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdRemoveFile;
+    request.hdr.offset = 0;
+    request.hdr.size = 0;
+
+    _fillRequestWithString(&request, file);
+    _sendRequest(&request);
+}
+
 
 void FileManager::downloadFile(const QString filePath, const QDir& downloadDir, bool readFile)
 {
@@ -293,9 +359,105 @@ void FileManager::downloadFile(const QString filePath, const QDir& downloadDir, 
     _sendRequest(&request);
 }
 
+/// Closes out an upload session doing cleanup.
+///     @param success true: successful upload completion, false: error during download
+void FileManager::_closeUploadSession(bool success)
+{
+    _currentOperation = kCOIdle;
+    _writeFileAccumulator.clear();
+    _writeFileSize = 0;
+
+    if (success) {
+        qDebug() << "command complete";
+    }
+
+    // Close the open session
+    _sendResetCommand();
+}
+
+/// @brief Respond to the Ack associated with the create command.
+void FileManager::_createAckResponse(Request* createAck)
+{
+    qDebug() << "_createAckResponse";
+
+    _currentOperation = kCOWrite;
+    _activeSession = createAck->hdr.session;
+
+    // Start the sequence of write commands from the beginning of the file
+
+    _writeOffset = 0;
+    _writeSize = 0;
+
+    _writeFileDatablock();
+}
+
+/// @brief Send next write file data block.
+void FileManager::_writeFileDatablock(void)
+{
+    if (_writeOffset + _writeSize >= _writeFileSize){
+        _closeUploadSession(true /* success */);
+        return;
+    }
+
+    _writeOffset += _writeSize;
+
+    Request request;
+    request.hdr.session = _activeSession;
+    request.hdr.opcode = kCmdWriteFile;
+    request.hdr.offset = _writeOffset;
+
+    if(_writeFileSize -_writeOffset > sizeof(request.data) )
+        _writeSize = sizeof(request.data);
+    else
+        _writeSize = _writeFileSize - _writeOffset;
+
+    request.hdr.size = _writeSize;
+
+    memcpy(request.data, &_writeFileAccumulator.data()[_writeOffset], _writeSize);
+
+    _sendRequest(&request);
+}
+
+/// @brief Respond to the Ack associated with the write command.
+void FileManager::_writeAckResponse(Request* writeAck)
+{
+    if(_writeOffset + _writeSize >= _writeFileSize){
+        _closeUploadSession(true /* success */);
+        return;
+    }
+
+    if (writeAck->hdr.session != _activeSession) {
+        _closeUploadSession(false /* failure */);
+        qDebug() << (tr("Write: Incorrect session returned"));
+        return;
+    }
+
+    if (writeAck->hdr.offset != _writeOffset) {
+        _closeUploadSession(false /* failure */);
+        qDebug() << (tr("Write: Offset returned (%1) differs from offset requested (%2)").arg(writeAck->hdr.offset).arg(_writeOffset));
+        return;
+    }
+
+    if (writeAck->hdr.size != sizeof(uint32_t)) {
+        _closeUploadSession(false /* failure */);
+        qDebug() << (tr("Write: Returned invalid size of write size data"));
+        return;
+    }
+
+
+    if( writeAck->writeFileLength !=_writeSize) {
+        _closeUploadSession(false /* failure */);
+        qDebug() << (tr("Write: Size returned (%1) differs from size requested (%2)").arg(writeAck->writeFileLength).arg(_writeSize));
+        return;
+    }
+
+    _writeFileDatablock();
+}
+
 void FileManager::receiveMessage(Request *request)
 {
     uint16_t incomingSeqNumber = request->hdr.seqNumber;
+    qDebug() << "session no: " << request->hdr.seqNumber;
 
     // Make sure we have a good sequence number
     uint16_t expectedSeqNumber = _lastOutgoingRequest.hdr.seqNumber + 1;
@@ -313,6 +475,25 @@ void FileManager::receiveMessage(Request *request)
         case kCORead:
             _closeDownloadSession(false);
             break;
+        case kCOWrite:
+            _closeUploadSession(false /* failure */);
+            break;
+
+        case kCOOpenRead:
+        case kCOOpenBurst:
+        case kCOCreate:
+            // We could have an open session hanging around
+            _currentOperation = kCOIdle;
+            _sendResetCommand();
+            break;
+
+        case KCORemove:
+            qDebug() << "file removed";
+
+        default:
+            // Don't need to do anything special
+            _currentOperation = kCOIdle;
+            break;
         }
     }
 
@@ -329,6 +510,13 @@ void FileManager::receiveMessage(Request *request)
             break;
         case kCmdReadFile:
             _downloadAckResponse(request, true);
+            break;
+        case kCmdCreateFile:
+            _createAckResponse(request);
+            break;
+
+        case kCmdWriteFile:
+            _writeAckResponse(request);
             break;
         default:
             _currentOperation = kCOIdle;

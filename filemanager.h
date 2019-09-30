@@ -58,8 +58,8 @@ public:
     }) Request;
 
     int session_id;
-    static const int ackTimerTimeoutMsecs = 50;
-    static const int ackTimerMaxRetries = 6;
+    static const int ackTimerTimeoutMsecs = 5000;
+    static const int ackTimerMaxRetries = 10;
 
 private:
     enum Opcode
@@ -99,6 +99,7 @@ private:
             kCOBurst,		// waiting for Burst response
             kCOWrite,       // waiting for Write response
             kCOCreate,      // waiting for Create response
+            KCORemove,      // waiting for remove response
             kCOCreateDir,   // waiting for Create Directory response
         };
 
@@ -140,6 +141,12 @@ private:
     bool        _downloadingMissingParts;   ///< true if we are currently downloading missing parts
     QQueue<MissingData> _missingData;       ///< missing chunks of downloaded file (for burst downloads)
 
+    uint32_t    _writeOffset;               ///< current write offset
+    uint32_t    _writeSize;                 ///< current write data size
+    uint32_t    _writeFileSize;             ///< Size of file being uploaded
+    QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
+    uint8_t     _activeSession;             ///< currently active session, 0 for none
+
     void _clearAckTimeout(void);
     void _closeDownloadSession(bool success);
     void _downloadAckResponse(Request* readAck, bool readFile);
@@ -151,7 +158,10 @@ private:
     void _sendRequest(Request* request);
     void _sendRequestNoAck(Request* request);
     void _setupAckTimeout(void);
-
+    void _closeUploadSession(bool success);
+    void _createAckResponse(Request* createAck);
+    void _writeAckResponse(Request* writeAck);
+    void _writeFileDatablock(void);
 
 signals:
     void downloadProgress(qreal val);
@@ -165,6 +175,10 @@ public slots:
 
     void receiveMessage(Request* request);
 
+    void uploadPath(const QString& toPath, const QFileInfo& uploadFile);
+
+    /// Delete the specified file
+    void deleteFile(const QString& file);
 private slots:
     void _ackTimeout(void);
 };

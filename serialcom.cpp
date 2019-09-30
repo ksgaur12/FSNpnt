@@ -11,6 +11,7 @@ mavlink_message_t msg;
 mavlink_status_t com_status;
 
 QSerialPort* Serialcom::serial;
+QUdpSocket* Serialcom::udp_sock;
 
 Serialcom::Serialcom(QObject *parent) : QObject(parent)
 {
@@ -22,7 +23,11 @@ void Serialcom::_check_for_data(){
     }
 }
 void Serialcom::_sendBytes(QByteArray data){
-    serial->write(data);
+    if(conn == SERIAL)
+        serial->write(data);
+    else if(conn == UDP && _sender != QHostAddress::Null){
+        udp_sock->writeDatagram(data, _sender, _senderPort);
+    }
 }
 
 void Serialcom::writeData(const char *data, int size)
@@ -37,7 +42,12 @@ void Serialcom::writeData(QByteArray &data)
 void Serialcom::readData()
 {
     QByteArray mav_data;
-    mav_data = serial->readAll();
+    if(conn == SERIAL)
+        mav_data = serial->readAll();
+    else if(conn== UDP){
+        mav_data.resize(udp_sock->pendingDatagramSize());
+        udp_sock->readDatagram(mav_data.data(), mav_data.size(), &_sender, &_senderPort);
+    }
 
     for(int i=0; i< mav_data.size(); i++){
         if(mavlink_parse_char(mav_ch, mav_data.at(i), &msg, &com_status)){
@@ -62,7 +72,7 @@ void Serialcom::_handle_msg(mavlink_message_t *msg){
             _conn_stat = true;
             emit send_conn_status(_conn_stat);
         }
-        _send_heartbeat();
+        //_send_heartbeat();
         break;
     case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
         mavlink_file_transfer_protocol_t file;
@@ -88,38 +98,66 @@ void Serialcom::search_port()
 void Serialcom::connect_telem(QString port, int baud, QString com_link_status)
 {
     if(com_link_status == "Disconnect"){
-        serial->close();
+        if(conn == SERIAL){
+            serial->close();
+            delete serial;
+        }
+        else if(conn == UDP){
+
+        }
         _conn_stat = false;
-        delete serial;
         emit send_conn_status(_conn_stat);
         return;
     }
+
+    if(port == "UDP"){
+        qDebug() << baud;
+        switch(baud){
+        case 8:
+            baud = 14550;
+            break;
+        case 9:
+            baud = 14551;
+            break;
+        case 10:
+            baud = 14552;
+            break;
+        }
+        udp_sock = new QUdpSocket();
+        qDebug() << udp_sock->bind(QHostAddress::AnyIPv4, baud, QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
+        udp_sock->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
+        udp_sock->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+        conn = UDP;
+        connect(udp_sock, SIGNAL(readyRead()), this, SLOT(readData()));
+        return;
+    }
+
     serial = new QSerialPort();
     serial->setPortName(port);
 
     switch(baud){
-    case 1:
+    case 0:
         serial->setBaudRate(QSerialPort::Baud1200);
         break;
-    case 2:
+    case 1:
         serial->setBaudRate(QSerialPort::Baud2400);
         break;
-    case 3:
+    case 2:
         serial->setBaudRate(QSerialPort::Baud4800);
         break;
-    case 4:
+    case 3:
         serial->setBaudRate(QSerialPort::Baud9600);
         break;
-    case 5:
+    case 4:
         serial->setBaudRate(QSerialPort::Baud19200);
         break;
-    case 6:
+    case 5:
         serial->setBaudRate(QSerialPort::Baud38400);
         break;
-    case 7:
+    case 6:
         serial->setBaudRate(QSerialPort::Baud57600);
         break;
-    case 8:
+    case 7:
         serial->setBaudRate(QSerialPort::Baud115200);
         break;
     }
@@ -130,6 +168,7 @@ void Serialcom::connect_telem(QString port, int baud, QString com_link_status)
     serial->setFlowControl(QSerialPort::NoFlowControl);
 
     if (serial->open(QIODevice::ReadWrite)) {
+        conn = SERIAL;
         connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
     }
 

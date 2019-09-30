@@ -46,6 +46,7 @@ public slots:
     void load_cert(QString file);
     void load_csr(QString file);
     void load_keys(QString file);
+    void convert_der_to_pem(QString file);
 };
 
 #endif // CERTHANDLE_H

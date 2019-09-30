@@ -7,6 +7,8 @@
 #include <QThread>
 #include <QTime>
 #include <QTimer>
+#include <QUdpSocket>
+#include <QNetworkProxy>
 
 #include "mavlink/mavlink_types.h"
 //#include "filemanager.h"
@@ -28,6 +30,16 @@ public:
     uint8_t componentId;
     uint8_t systemStatus;
 
+    enum conn_type{
+        SERIAL,
+        UDP,
+        TCP,
+        IOT,
+        NONE
+    };
+
+    conn_type conn;
+
 private:
     void _handle_msg(mavlink_message_t *msg);
     void _send_heartbeat();
@@ -36,6 +48,10 @@ private:
     QThread _timer_thread;
     QTime _timer;
     QTimer _conn_timer;
+
+    static QUdpSocket *udp_sock;
+    QHostAddress _sender;
+    quint16 _senderPort;
 
 signals:
     void send_conn_status(bool status);

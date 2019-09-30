@@ -241,13 +241,17 @@ void CertHandle::load_keys(QString file)
     free_:
         BIO_free(in);
 
-    emit key_load_success();
+        emit key_load_success();
+}
+
+void CertHandle::convert_der_to_pem(QString file)
+{
+    file.remove(0, 5); //remove the file prefix
+
 }
 
 void CertHandle::load_cert(QString file)
 {
-    qDebug() << file;
-
     file.remove(0, 5); //remove the file prefix
     memcpy(_file_name, file.toStdString().c_str(), file.size());
 

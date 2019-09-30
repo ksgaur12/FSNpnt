@@ -3,6 +3,7 @@
 
 #include <QStandardItemModel>
 #include <QModelIndex>
+#include <QFileInfo>
 
 class filemodel : public QStandardItemModel
 {
@@ -16,8 +17,10 @@ private:
 
 public slots:
     void download_file(QString dir_url);
+    void upload_file(QString file_url);
     void item_clicked(QModelIndex index);
     void append_item(QString val);
+    void delete_file();
 };
 
 #endif // FILEMODEL_H

@@ -104,11 +104,22 @@ Window {
 
         onPressedChanged: {
             serial_model.clear()
+            serial_model.append({"Text":"UDP"})
             Serialcom.search_port()
         }
 
         onActivated: {
             displayText = currentText
+        }
+    }
+    FileDialog{
+        id: folder_dialog_load_PA
+        title: "Please select the Permission Artifact"
+        nameFilters: ["PEM files(*.xml)"]
+        folder: shortcuts.home
+        onAccepted: {
+            console.log(fileUrl);
+            fc_dir_model.upload_file(fileUrl);
         }
     }
 
@@ -131,8 +142,8 @@ Window {
         anchors.right: text1.left
         anchors.rightMargin: 2
         anchors.verticalCenter: download_button.verticalCenter
-        anchors.left: download_button.right
-        anchors.leftMargin: 15
+        anchors.left: delete_button.right
+        anchors.leftMargin: 5
         from: 0
         to: 100
         value: 0
@@ -160,10 +171,11 @@ Window {
         id: download_button
         x: 2
         y: 453
+        height: 40
         text: qsTr("Download")
         z: 3
         anchors.right: fc_list.right
-        anchors.rightMargin: 0
+        anchors.rightMargin: 300
         anchors.left: parent.left
         anchors.leftMargin: 2
         anchors.bottom: parent.bottom
@@ -203,6 +215,9 @@ Window {
             ListElement { text: "38400" }
             ListElement { text: "57600" }
             ListElement { text: "115200" }
+            ListElement { text: "14550" }
+            ListElement { text: "14551" }
+            ListElement { text: "14552" }
         }
 
         onActivated:{
@@ -228,7 +243,7 @@ Window {
                 message_box.text = "Please select a device"
                 message_box.visible = true
             }
-            else if(!baud_box.currentIndex){
+            else if(baud_box.currentIndex<0){
                 message_box.title = "Error"
                 message_box.text = "Please select a baudrate"
                 message_box.visible = true
@@ -269,6 +284,7 @@ Window {
         width: 140
         height: 30
         text: qsTr("Generate Cert")
+        visible: false
         z: 2
         anchors.right: port_box.left
         anchors.rightMargin: 2
@@ -277,6 +293,80 @@ Window {
 
         onClicked: {
             cert.visible = true
+        }
+    }
+
+    Button {
+        id: upload_button
+        x: -6
+        text: qsTr("Upload PA")
+        anchors.top: download_button.top
+        anchors.topMargin: 0
+        anchors.right: fc_list.right
+        anchors.bottom: download_button.bottom
+        anchors.leftMargin: 152
+        anchors.bottomMargin: 0
+        z: 3
+        anchors.rightMargin: 150
+        anchors.left: fc_list.left
+
+        onClicked: {
+            if(downloadProgressBar.visible){
+                message_box.title = "Error"
+                message_box.text = "Download already in progress"
+                message_box.visible = true
+            }
+            else{
+                folder_dialog_load_PA.open()
+            }
+        }
+    }
+
+    Button {
+        id: delete_button
+        x: 458
+        y: 438
+        text: qsTr("Delete")
+        anchors.right: fc_list.right
+        anchors.bottom: download_button.bottom
+        anchors.leftMargin: 2
+        anchors.top: download_button.top
+        anchors.left: upload_button.right
+        anchors.topMargin: 0
+        anchors.bottomMargin: 0
+        z: 3
+        anchors.rightMargin: 0
+        onClicked: {
+            fc_dir_model.delete_file()
+        }
+    }
+
+    FileDialog{
+        id: folder_dialog_load_public_key
+        title: "Please select your public key"
+        nameFilters: ["DER files(*.der)"]
+        folder: shortcuts.home
+        onAccepted: {
+            cert_manager.convert_der_to_pem(fileUrl)
+        }
+    }
+
+    Button {
+        id: der_to_pem
+        x: 790
+        y: 0
+        width: 140
+        height: 30
+        text: qsTr("Der to Pem")
+        anchors.right: port_box.left
+        z: 2
+        anchors.top: parent.top
+        anchors.rightMargin: 2
+        visible: true
+        anchors.topMargin: 2
+
+        onClicked: {
+            folder_dialog_load_public_key.open()
         }
     }
 }

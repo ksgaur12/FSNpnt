@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_CertHandle_t {
-    QByteArrayData data[13];
-    char stringdata0[154];
+    QByteArrayData data[14];
+    char stringdata0[173];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -43,14 +43,15 @@ QT_MOC_LITERAL(8, 106, 13), // "generate_cert"
 QT_MOC_LITERAL(9, 120, 9), // "load_cert"
 QT_MOC_LITERAL(10, 130, 4), // "file"
 QT_MOC_LITERAL(11, 135, 8), // "load_csr"
-QT_MOC_LITERAL(12, 144, 9) // "load_keys"
+QT_MOC_LITERAL(12, 144, 9), // "load_keys"
+QT_MOC_LITERAL(13, 154, 18) // "convert_der_to_pem"
 
     },
     "CertHandle\0cert_load_success\0\0"
     "csr_load_success\0key_generate_success\0"
     "key_load_success\0generate_keys\0folder\0"
     "generate_cert\0load_cert\0file\0load_csr\0"
-    "load_keys"
+    "load_keys\0convert_der_to_pem"
 };
 #undef QT_MOC_LITERAL
 
@@ -60,7 +61,7 @@ static const uint qt_meta_data_CertHandle[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       9,   14, // methods
+      10,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -68,17 +69,18 @@ static const uint qt_meta_data_CertHandle[] = {
        4,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    0,   59,    2, 0x06 /* Public */,
-       3,    0,   60,    2, 0x06 /* Public */,
-       4,    0,   61,    2, 0x06 /* Public */,
-       5,    0,   62,    2, 0x06 /* Public */,
+       1,    0,   64,    2, 0x06 /* Public */,
+       3,    0,   65,    2, 0x06 /* Public */,
+       4,    0,   66,    2, 0x06 /* Public */,
+       5,    0,   67,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       6,    1,   63,    2, 0x0a /* Public */,
-       8,    1,   66,    2, 0x0a /* Public */,
-       9,    1,   69,    2, 0x0a /* Public */,
-      11,    1,   72,    2, 0x0a /* Public */,
-      12,    1,   75,    2, 0x0a /* Public */,
+       6,    1,   68,    2, 0x0a /* Public */,
+       8,    1,   71,    2, 0x0a /* Public */,
+       9,    1,   74,    2, 0x0a /* Public */,
+      11,    1,   77,    2, 0x0a /* Public */,
+      12,    1,   80,    2, 0x0a /* Public */,
+      13,    1,   83,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void,
@@ -89,6 +91,7 @@ static const uint qt_meta_data_CertHandle[] = {
  // slots: parameters
     QMetaType::Void, QMetaType::QString,    7,
     QMetaType::Void, QMetaType::QString,    7,
+    QMetaType::Void, QMetaType::QString,   10,
     QMetaType::Void, QMetaType::QString,   10,
     QMetaType::Void, QMetaType::QString,   10,
     QMetaType::Void, QMetaType::QString,   10,
@@ -111,6 +114,7 @@ void CertHandle::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->load_cert((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 7: _t->load_csr((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 8: _t->load_keys((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 9: _t->convert_der_to_pem((*reinterpret_cast< QString(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -171,13 +175,13 @@ int CertHandle::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 10)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 10;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 9)
+        if (_id < 10)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 9;
+        _id -= 10;
     }
     return _id;
 }
