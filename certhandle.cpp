@@ -138,17 +138,17 @@ free_all:
 
 int CertHandle::_do_X509_sign(X509 *cert, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    int rv;
-    EVP_MD_CTX mctx;
-    EVP_PKEY_CTX *pkctx = NULL;
+//    int rv;
+//    EVP_MD_CTX mctx;
+//    EVP_PKEY_CTX *pkctx = NULL;
 
-    EVP_MD_CTX_init(&mctx);
-    rv = EVP_DigestSignInit(&mctx, &pkctx, md, NULL, pkey);
+//    EVP_MD_CTX_init(&mctx);
+//    rv = EVP_DigestSignInit(&mctx, &pkctx, md, NULL, pkey);
 
-    if(rv > 0)
-        rv = X509_sign_ctx(cert, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
-    return rv > 0 ? 1 : 0;
+//    if(rv > 0)
+//        rv = X509_sign_ctx(cert, &mctx);
+//    EVP_MD_CTX_cleanup(&mctx);
+//    return rv > 0 ? 1 : 0;
 }
 
 void CertHandle::generate_cert(QString folder)

@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QQueue>
 //#include "serialcom.h"
-#include "mavlink/mavlink_types.h"
+#include "mavlink/v2.0/mavlink_types.h"
 #include "mav_bridge.h"
 
 #ifdef __GNUC__
@@ -165,6 +165,8 @@ private:
 
 signals:
     void downloadProgress(qreal val);
+    void uploadProgress(qreal val);
+    void fileRemoved();
 
 public slots:
     //get the list of files and directory from UAS at specified path

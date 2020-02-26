@@ -8,6 +8,8 @@ import Qt.labs.platform 1.0
 import QtQuick.Dialogs 1.1
 import QtQuick.Dialogs 1.2
 
+import firmwareController 1.0
+
 import "qrc:/"
 
 Window {
@@ -38,6 +40,69 @@ Window {
                 rectangle.color = "red"
             }
         }
+        onSend_device_id:{
+            element1.text = device_id
+        }
+    }
+
+    FileDialog{
+        id: file_firmware
+        title: "Please select the bin file"
+        nameFilters: ["PEM files(*.bin)"]
+        folder: shortcuts.home
+        onAccepted: {
+            console.log(fileUrl);
+            controller.flash(fileUrl);
+        }
+    }
+
+    FirmwareUpgradeController{
+        id: controller
+
+//        onActiveVehicleChanged: {
+////            if (!activeVehicle) {
+////                statusTextArea.append(plugInText)
+////            }
+//        }
+
+        onNoBoardFound: {
+//            initialBoardSearch = false
+//            if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+//                statusTextArea.append(plugInText)
+//            }
+            console.log("not found")
+        }
+
+        onBoardGone: {
+//            initialBoardSearch = false
+//            if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
+//                statusTextArea.append(plugInText)
+//            }
+            console.log("gone")
+        }
+
+        onBoardFound: {
+//            if (initialBoardSearch) {
+//                // Board was found right away, so something is already plugged in before we've started upgrade
+//                statusTextArea.append(qgcUnplugText1)
+//                statusTextArea.append(qgcUnplugText2)
+//                QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
+//            } else {
+//                // We end up here when we detect a board plugged in after we've started upgrade
+//                statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
+//                if (controller.pixhawkBoard || controller.px4FlowBoard) {
+//                    showDialog(pixhawkFirmwareSelectDialogComponent, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+//                }
+//            }
+            console.log("found")
+            file_firmware.open()
+        }
+
+        onError: {
+            console.log("error")
+//            hideDialog()
+//            statusTextArea.append(flashFailText)
+        }
     }
 
     Connections{
@@ -54,6 +119,27 @@ Window {
                 downloadProgressBar.visible = false
                 text1.visible = false
             }
+        }
+
+        onUploadProgress:{
+            downloadProgressBar.value =  val
+            text1.text = Math.round(val*10)/10 + "%"
+            text1.visible = true
+            downloadProgressBar.visible = true
+            if(val == 100){
+                message_box.title = "Message"
+                message_box.text = "Upload Complete"
+                message_box.visible = true
+                downloadProgressBar.visible = false
+                text1.visible = false
+            }
+        }
+        onFileRemoved:{
+            message_box.title = "Message"
+            message_box.text = "File Deleted"
+            message_box.visible = true
+            downloadProgressBar.visible = false
+            text1.visible = false
         }
     }
 
@@ -304,11 +390,11 @@ Window {
         anchors.topMargin: 0
         anchors.right: fc_list.right
         anchors.bottom: download_button.bottom
-        anchors.leftMargin: 152
+        anchors.leftMargin: 2
         anchors.bottomMargin: 0
         z: 3
         anchors.rightMargin: 150
-        anchors.left: fc_list.left
+        anchors.left: download_button.right
 
         onClicked: {
             if(downloadProgressBar.visible){
@@ -357,7 +443,7 @@ Window {
         y: 0
         width: 140
         height: 30
-        text: qsTr("Der to Pem")
+        text: qsTr("Reboot")
         anchors.right: port_box.left
         z: 2
         anchors.top: parent.top
@@ -366,7 +452,55 @@ Window {
         anchors.topMargin: 2
 
         onClicked: {
-            folder_dialog_load_public_key.open()
+            Serialcom.flight_reboot();
+            //folder_dialog_load_public_key.open()
         }
     }
+
+    Text {
+        id: element
+        width: 74
+        height: 15
+        text: qsTr("Device ID: ")
+        anchors.top: der_to_pem.bottom
+        anchors.topMargin: 5
+        anchors.left: der_to_pem.left
+        anchors.leftMargin: 0
+        fontSizeMode: Text.Fit
+        font.pixelSize: 12
+    }
+
+    Text {
+        id: element1
+        width: 120
+        height: 15
+        text: qsTr("")
+        anchors.top: element.top
+        anchors.topMargin: 0
+        anchors.left: element.right
+        anchors.leftMargin: 5
+        fontSizeMode: Text.Fit
+        font.pixelSize: 12
+    }
+
+    Button {
+        id: findboard_button
+        text: qsTr("Flash firmware")
+        anchors.top: element.bottom
+        anchors.topMargin: 5
+        anchors.left: element.left
+        anchors.leftMargin: 0
+        onClicked: {
+            controller.startBoardSearch()
+        }
+    }
+
 }
+
+
+
+/*##^##
+Designer {
+    D{i:38;anchors_x:460;anchors_y:80}
+}
+##^##*/

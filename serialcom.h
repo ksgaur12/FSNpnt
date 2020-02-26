@@ -10,7 +10,7 @@
 #include <QUdpSocket>
 #include <QNetworkProxy>
 
-#include "mavlink/mavlink_types.h"
+#include "mavlink/v2.0/mavlink_types.h"
 //#include "filemanager.h"
 
 
@@ -18,7 +18,7 @@ class Serialcom : public QObject
 {
     Q_OBJECT
 public:
-    explicit Serialcom(QObject *parent = nullptr);
+    Serialcom(QObject *parent = nullptr);
     void writeData(const char *data, int size);
     void writeData(QByteArray &data);
 
@@ -52,16 +52,19 @@ private:
     static QUdpSocket *udp_sock;
     QHostAddress _sender;
     quint16 _senderPort;
+    bool _paramInit = false;
 
 signals:
     void send_conn_status(bool status);
     void send_data_status(bool data_status);
     void send_serial_port(QString port);
+    void send_device_id(QString device_id);
 
 public slots:
     void connect_telem(QString port, int baud, QString com_link_status);
     void readData();
     void search_port();
+    void flight_reboot();
 
 private slots:
     void _check_for_data();

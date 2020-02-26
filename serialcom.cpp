@@ -55,7 +55,7 @@ void Serialcom::readData()
         }
     }
     _timer.restart();
-    QTimer::singleShot(1000, this, SLOT(_check_for_data()));
+    QTimer::singleShot(10000, this, SLOT(_check_for_data()));
 }
 
 void Serialcom::_handle_msg(mavlink_message_t *msg){
@@ -72,8 +72,27 @@ void Serialcom::_handle_msg(mavlink_message_t *msg){
             _conn_stat = true;
             emit send_conn_status(_conn_stat);
         }
+
+        if(!_paramInit){
+            const int maxStreams = 7;
+            const uint8_t MAVStreams[] = { MAV_DATA_STREAM_RAW_SENSORS, MAV_DATA_STREAM_EXTENDED_STATUS, MAV_DATA_STREAM_RC_CHANNELS, MAV_DATA_STREAM_POSITION, MAV_DATA_STREAM_EXTRA1, MAV_DATA_STREAM_EXTRA2, MAV_DATA_STREAM_EXTRA3}; const uint16_t MAVRates[] = { 0x02, 0x05, 0x02, 0x05, 0x02, 0x02, 0x01};
+            for (int i=0; i < maxStreams; i++) {
+                for(int j=0; j<5; j++)
+                    mavlink_msg_request_data_stream_send(MAVLINK_COMM_0, systemId,  componentId,  0, 5, 1);
+            }
+            _paramInit = true;
+
+            mavlink_msg_param_request_list_send(MAVLINK_COMM_0, systemId, componentId);
+        }
+
         //_send_heartbeat();
         break;
+    case MAVLINK_MSG_ID_PERMISSION_ARTIFACT:
+        mavlink_permission_artifact_t pa;
+        mavlink_msg_permission_artifact_decode(msg, &pa);
+        emit send_device_id(pa.busname);
+        break;
+
     case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
         mavlink_file_transfer_protocol_t file;
         mavlink_msg_file_transfer_protocol_decode(msg, &file);
@@ -95,6 +114,11 @@ void Serialcom::search_port()
     }
 }
 
+void Serialcom::flight_reboot()
+{
+    mavlink_msg_command_long_send(MAVLINK_COMM_0, systemId, componentId, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 1, 0, 0, 0, 0, 0, 0); //sends mavlink to set home as current
+}
+
 void Serialcom::connect_telem(QString port, int baud, QString com_link_status)
 {
     if(com_link_status == "Disconnect"){
@@ -103,13 +127,14 @@ void Serialcom::connect_telem(QString port, int baud, QString com_link_status)
             delete serial;
         }
         else if(conn == UDP){
-
+            udp_sock->close();
+            delete udp_sock;
         }
         _conn_stat = false;
         emit send_conn_status(_conn_stat);
         return;
     }
-
+    qDebug() << port;
     if(port == "UDP"){
         qDebug() << baud;
         switch(baud){

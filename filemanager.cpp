@@ -265,6 +265,7 @@ void FileManager::listDirectory(const QString dirPath)
 
 void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
 {
+    qDebug() << "here";
     if(_currentOperation != kCOIdle){
         qDebug() << tr("UAS File manager busy. Try again later");
         return;
@@ -421,6 +422,8 @@ void FileManager::_writeFileDatablock(void)
 /// @brief Respond to the Ack associated with the write command.
 void FileManager::_writeAckResponse(Request* writeAck)
 {
+    emit uploadProgress(100 * ((float)(_writeOffset + _writeSize)/ (float)_writeFileSize));
+
     if(_writeOffset + _writeSize >= _writeFileSize){
         _closeUploadSession(true /* success */);
         return;
@@ -519,6 +522,9 @@ void FileManager::receiveMessage(Request *request)
             _writeAckResponse(request);
             break;
         default:
+            if(_currentOperation == KCORemove){
+                emit fileRemoved();
+            }
             _currentOperation = kCOIdle;
             break;
         }

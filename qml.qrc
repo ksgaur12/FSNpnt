@@ -4,4 +4,7 @@
         <file>Certhandle.qml</file>
         <file>Buildsettings.qml</file>
     </qresource>
+    <qresource prefix="/json">
+        <file alias="USBBoardInfo.json">src/USBBoardInfo.json</file>
+    </qresource>
 </RCC>
